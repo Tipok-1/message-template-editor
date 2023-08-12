@@ -76,7 +76,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                         const obj: ITemplateNote = {
                             id: el.id,
                             value: el.value.map((arrEl, i) => i == lastActiveIfThenElseField ? 
-                            arrEl ? arrEl.slice(0, lastCursorPosition) + `{${variables}}`+ arrEl.slice(lastCursorPosition): arrEl
+                            (arrEl !== null) ? arrEl.slice(0, lastCursorPosition) + `{${variables}}`+ arrEl.slice(lastCursorPosition): arrEl
                             : arrEl),
                         }
                         if (el.nesting != undefined) obj.nesting = el.nesting
