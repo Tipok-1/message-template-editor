@@ -1,0 +1,16 @@
+.Button{
+    padding: 7px 10px;
+    border:1px solid black;
+    border-radius: 5px;
+    display: flex;
+    position: relative;
+}
+.Button:hover{
+    cursor: pointer;
+}
+.ButtonIco{
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-right: 3px;
+}

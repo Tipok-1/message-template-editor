@@ -1,0 +1,96 @@
+.TemplateEditingWrap {
+    height: 100%;
+    width: 80%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transition: width .3s ease-in-out;
+}
+
+.TemplatePreviewWrap {
+    position: fixed;
+    right: 0;
+    height: 100%;
+    width: 20%;
+    padding-right: 3px;
+    outline: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    transition: transform .3s ease-in-out;
+}
+
+.CloseIcoWrap {
+    height: 30px;
+    width: 30px;
+    align-self: flex-end;
+    margin-right: 5px;
+}
+.CloseIcoWrap:hover{
+    cursor: pointer;
+}
+.CloseIco{
+    height: 100%;
+    width: 100%;
+}
+.TemplateEditing{
+    width: 95%;
+    height: 95%;
+    display: flex;
+    flex-direction: column;
+}
+.titleSpan{
+    font-size: 16px;
+    color:rgb(71, 71, 71);
+}
+/*Variables*/
+.variablesWrap, .messageWrap, .buttonsWrap{
+    width:100%;
+}
+.variablesWrap{
+    border:1px solid green;
+    font-size: 18px;
+}
+.variables{
+    width: 100%;
+    display: flex;
+    margin: 15px 0;
+}
+.variable{
+    background-color: rgb(88, 86, 86);
+    color: white;
+    margin-left: 10px; 
+    padding: 5px 10px; 
+    border-radius: 5px;  
+}
+.variable:hover{
+    cursor: pointer;
+}
+/*Contents*/
+.messageWrap{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    border:1px solid red;
+}
+.messageContent{
+    margin: 20px;
+}
+.IfThenElseButton{
+    align-self: flex-end;
+    margin-right: 20px;
+}
+/*Buttons*/
+.buttonsWrap{
+    border:1px solid black;
+    display: flex;
+    margin-bottom: 20px;
+}
+.buttonsCenterWrap{
+    align-self: center;
+    margin: auto;
+    width: 20%;
+    display: flex;
+    justify-content: space-between;
+}
