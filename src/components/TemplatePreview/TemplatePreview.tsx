@@ -9,8 +9,17 @@ interface ITemplatePreview {
     arrVarNames: string[],
 }
 
-function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string;}, _parentId?:string): string {
+function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string; }, _parentId?: string): string {
     let result = ''
+    function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
+        let l = arr.length;
+        while (l--) {
+            if (fn(arr[l], l, arr))
+                return l;
+        }
+        return -1;
+    }
+
     function findAndReplaceValues(str: string) {
         for (let key in values) {
             let regex = new RegExp(`{${key}}`, 'g');
@@ -18,38 +27,48 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
         }
         return str
     }
+    //const reverseTempla
     for (let i = 0; i < template.length; i++) {
         let value = template[i].value;
         if (Array.isArray(value)) {
-            const lastBlockPart = template.findIndex(el => el.startWhithId === template[i].id);
-            if (lastBlockPart !== -1) {
+            const lastBlockPart = template.findIndex(el => el.startWhithId === template[i].id); //Ищем конец [if-then-else] блока
+            if (lastBlockPart !== -1) {//Если блок составной
                 let index = i;
-                let ifResult = findAndReplaceValues(value[0] as string)
-                if (value[1] === null) {
-                    const fieldEnd = template.findIndex(el => el.parentId == template[i].id);
-                    index = fieldEnd + 1
-                    const ifBlock = template.slice(i+1, fieldEnd + 1) //По fieldEnd включительно;
+                let ifResult = findAndReplaceValues(value[0] as string)//Включаем первую строку if
+                if (value[1] === null) {//Если блок if составной
+                    // const fieldEnd = template.findLastIndex(el => el.parentId === template[i].id);
+                    const fieldEnd = findLastIndex(template, el => el.parentId === template[i].id);//Ищем последнюю часть блока if
+                    const ifBlock = template.slice(i + 1, fieldEnd + 1);//(Первую строку if мы уже включили)
                     ifResult += TemplateGenerator(ifBlock, values, template[i].id);
-                    console.log(ifResult)
-                } else {ifResult =  findAndReplaceValues(value[0] as string);}
+                    index = fieldEnd + 1
+                }
 
                 if (ifResult) {
-                    const fieldEnd = template.findIndex(el => el.parentId == template[index].id);
-                    if(fieldEnd !== -1) {
-                        let thenResult = findAndReplaceValues(template[index].value[1] as string);
-                        const thenBlock = template.slice(index + 1, fieldEnd + 1) //По fieldEnd включительно
+                    //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
+                    const fieldEnd = findLastIndex(template, el => el.parentId === template[index].id);//Проверяем составной ли блок then
+                    let thenResult = findAndReplaceValues(template[index].value[1] as string);
+                    if (fieldEnd !== -1) {
+                        const thenBlock = template.slice(index + 1, fieldEnd + 1) //(Первую строку then мы уже включили)
                         thenResult += TemplateGenerator(thenBlock, values, template[index].id);
-                        index = fieldEnd + 1
-                        result += thenResult;
-                    } else {result += findAndReplaceValues(template[index].value[1] as string);}
+                        index = fieldEnd + 1//Следующий блок берём после блока then
+                    }
+                    result += thenResult;
                 } else {
-                    const fieldEnd = template.findIndex(el => el.parentId == template[index].id);
-                    if(fieldEnd !== -1) {
-                        let elseResult = findAndReplaceValues(template[index].value[2] as string);
-                        const elseBlock = template.slice(index + 1, fieldEnd + 1) //По fieldEnd включительно
+                    if (template[index].value[2] === null) {//template[index] - это блок then который может быт составным - если value[2] === null
+                        //const thenFieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
+                        const thenFieldEnd = findLastIndex(template, el => el.parentId == template[index].id)
+                        if (thenFieldEnd !== -1) {
+                            index = thenFieldEnd + 1;
+                        }
+                    }
+                    //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
+                    const fieldEnd = findLastIndex(template,el =>  el.parentId == template[index].id);//Проверяем составной ли блок else
+                    let elseResult = findAndReplaceValues(template[index].value[2] as string);
+                    if (fieldEnd !== -1) {
+                        const elseBlock = template.slice(index + 1, fieldEnd + 1)//(Первую строку else мы уже включили)
                         elseResult += TemplateGenerator(elseBlock, values, template[index].id);
-                        result += elseResult;
-                    } else {result += findAndReplaceValues(template[index].value[2] as string);}
+                    }
+                    result += elseResult;
                 }
                 i = lastBlockPart;
             } else {
@@ -62,7 +81,7 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
             }
         } else {
             if (!template[i].parentId || template[i].parentId === _parentId) {
-                result +=  findAndReplaceValues(value);
+                result += findAndReplaceValues(value);
             }
         }
     }

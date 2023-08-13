@@ -90,36 +90,24 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
     }
     const deleteIfThenElseBlock = useCallback((id: string) => {
         let block: ITemplateNote | undefined = templ.find(el => el.id == id)
-        let startRemovedIndex = templ.findIndex(el => el.id == id);
-        const prevBlock = templ[startRemovedIndex - 1];
-        let nextBlock = templ[startRemovedIndex + 2];
-        let isCompositeBlock = false;
-        if (block) {
-            let endRemovedIndex = templ.findIndex(el => {
-                if ('startWhithId' in el) {
-                    if (el.startWhithId == id) {
-                        return true;
-                    }
-                }
-                return false
-            })
-            if (endRemovedIndex != -1) {
-                isCompositeBlock = true;
-            }
-            let newTempl: ITemplateNote[] = [];
-            if (isCompositeBlock) {
-                console.log('composed')
+        let blockId = templ.findIndex(el => el.id == id)
+        const prevBlock = templ[blockId - 1];
+        let nextBlock = templ[blockId + 2];
+        if(block) {
+            let newTempl = null;
+            let blockEnd = templ.findIndex(el=>el.startWhithId === block!.id)
+            if(blockEnd !== -1) {
+                //Блок составной
                 newTempl = templ.filter((_, i) => {
-                    if (i >= startRemovedIndex && i <= endRemovedIndex + 1) {
+                    if (i >= blockId  && i <= blockEnd + 1) {//Удаляем сам  блок и следующий за ним input
                         return false
                     }
                     return true;
                 });
-                nextBlock = templ[endRemovedIndex + 2];
             } else {
-                console.log('Not composed')
+                //Блок не составной
                 newTempl = templ.filter((el, i) => {
-                    if (el.id == id || i == startRemovedIndex + 1) {
+                    if (el.id === block!.id || i === blockId + 1) {//Удаляем сам  блок и следующий за ним input
                         return false
                     }
                     return true
@@ -127,21 +115,22 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
             }
             if (Array.isArray(prevBlock.value) && Array.isArray(nextBlock.value)) {
                 let coupledBlock: string[] = [];
-                prevBlock.value.forEach((el, i) => el != null ? coupledBlock.push(el) : coupledBlock.push(nextBlock.value[i] as string));
+                prevBlock.value.forEach((el, i) => el !== null ? coupledBlock.push(el) : coupledBlock.push(nextBlock.value[i] as string));
                 const prevBlockIndex = newTempl.findIndex(el => el.id === prevBlock.id);
                 if (prevBlockIndex != -1) {
                     const obj: ITemplateNote = { id: prevBlock.id, value: coupledBlock }
                     if (prevBlock.nesting != undefined) obj.nesting = prevBlock.nesting
-                    if (nextBlock.startWhithId) obj.startWhithId = nextBlock.startWhithId
                     if (prevBlock.parentId) obj.parentId = prevBlock.parentId
+                    if(nextBlock.startWhithId && nextBlock.startWhithId !== prevBlock.id) {
+                        //Не должно выполняться
+                        obj.startWhithId = nextBlock.startWhithId
+                    }
                     newTempl.splice(prevBlockIndex, 2, obj)
                 }
             }
             setLastActiveElement(prevBlock.id)
             setTempl(newTempl);
         }
-
-
     }, [templ])
     function clickIfThenElse() {
         let index = -1;
@@ -177,10 +166,17 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     setTempl(changedTempl);
                 } else {
                     //Если элемент не последний в списке то вставляем после него блок [if-then-else], ещё один инпут и остальные блоки
+                    const prevBlock = templ[index];
+                    const ifthenelseBlock: ITemplateNote = { id: createId(), value: ['', '', ''], nesting: nest != null ? nest : 0 };
+                    const input: ITemplateNote = { id: createId(), value: '', nesting: nest != null ? nest : 0 }
+                    if(prevBlock.parentId) {
+                        ifthenelseBlock.parentId = prevBlock.parentId;
+                        input.parentId = prevBlock.parentId;
+                    }
                     const changedTempl: ITemplateNote[] = [
                         ...templ.slice(0, index + 1),
-                        { id: createId(), value: ['', '', ''], nesting: nest != null ? nest + 1 : 0 },
-                        { id: createId(), value: '', nesting: nest != null ? nest : 0 },
+                        ifthenelseBlock,
+                        input,
                         ...templ.slice(index + 1, templ.length)
                     ];
                     setTempl(changedTempl);
@@ -199,23 +195,47 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
 
                 const firstPart: ITemplateNote = { id: ifThenElseBlock.id, value: fistBlockPart, nesting: nest != null ? nest : 0 }
                 if (ifThenElseBlock.parentId) firstPart.parentId = ifThenElseBlock.parentId;
+                const secondPart:ITemplateNote = {
+                    id: createId(),
+                    value: secondBlockPart,
+                    nesting: nest != null ? nest : 0,
+                    /*Если один и тот же [if-then-else] блок разбивают более одного раза(например разбили на if и thenElse, а потом разбили then или else)
+                     то в fistBlockPart уже должен быть startWhithId(ключ к началу разбиения) иначе сам fistBlockPart - начало(то есть часть с if)
+                     Максимальное разбиение одного блока 3 раза - каждую часть*/
+                }
+                
+                const checkLastBlock = templ.find(el=>{
+                    if((el.startWhithId === ifThenElseBlock.id && el.startWhithId !== undefined) || 
+                    (el.parentId === ifThenElseBlock.id && el.parentId !==undefined)) {//Текущий блок уже является составным
+                        return true;
+                    } 
+                    return false
+                })
+                if(!checkLastBlock) {
+                    secondPart.startWhithId =  ifThenElseBlock.startWhithId ? ifThenElseBlock.startWhithId : ifThenElseBlock.id
+                }
+
+
                 const changedTempl: ITemplateNote[] = [
                     ...templ.slice(0, index),
                     firstPart,
-                    { id: createId(), value: ['', '', ''], nesting: nest != null ? nest + 1 : 0 },
-                    { id: createId(), value: '', nesting: nest != null ? nest + 1 : 0, parentId: ifThenElseBlock.id },
-                    {
-                        id: createId(),
-                        value: secondBlockPart,
-                        nesting: nest != null ? nest : 0,
-                        startWhithId: ifThenElseBlock.startWhithId ? ifThenElseBlock.startWhithId : ifThenElseBlock.id,
-                        parentId: ifThenElseBlock.id
-                        /*Если один и тот же [if-then-else] блок разбивают более одного раза(например разбили на if и thenElse, а потом разбили then или else)
-                         то в fistBlockPart уже должен быть startWhithId(ключ к началу разбиения) иначе сам fistBlockPart - начало(то есть часть с if)
-                         Максимальное разбиение одного блока 3 раза - каждую часть*/
-                    },
-                    ...templ.slice(index + 1, templ.length)
+                    { id: createId(), value: ['', '', ''], nesting: nest != null ? nest + 1 : 0, parentId: ifThenElseBlock.id },
+                    { id: createId(), value: '', nesting: nest != null ? nest+1 : 0, parentId: ifThenElseBlock.id },
+                    secondPart,
+                    //...templ.slice(index + 1, templ.length)
                 ]
+                let rest = [...templ.slice(index + 1, templ.length)];
+                let NullCount = (secondPart.value as (string | null)[]).reduce((cur,el)=>el=== null ? cur+1 : cur, 0);
+                
+                if(checkLastBlock && NullCount < 3) {
+                    for(let i = 0; i < rest.length; i++) {
+                        if(rest[i].parentId === ifThenElseBlock.id) {
+                            rest[i].parentId = secondPart.id;
+                        }
+                    }
+                }
+                changedTempl.push(...rest);
+                //
                 setTempl(changedTempl);
 
             }
