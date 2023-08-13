@@ -13,7 +13,6 @@ interface IIfThenElse {
 const IfThenElse = ({ fieldState, Blur, setLastActiveIfThenElseField, deleteIfThenElseBlock}: IIfThenElse) => {
     function onBlur(e: React.FocusEvent<HTMLTextAreaElement, Element>, fieldNumber: number) {
         setLastActiveIfThenElseField(fieldNumber);
-        console.log(fieldNumber)
         Blur(e.currentTarget.value, fieldState.id,e.currentTarget.selectionStart ,fieldNumber);
     }
     return (
@@ -29,7 +28,7 @@ const IfThenElse = ({ fieldState, Blur, setLastActiveIfThenElseField, deleteIfTh
                 </div>
             }
             <div className={classes.IfThenElseWrap} style={{ marginLeft: fieldState.value[0] != null ? '' : '7%' }}>
-                {(fieldState.value.length > 0 && fieldState.value[0] != null) &&
+                {(fieldState.value.length > 0 && fieldState.value[0] != null) && //Проверяем есть ли поле if
                     <div className={classes.TextFieldWrap}>
                         <div className={classes.Tooltip}>IF</div  >
                         <AutoResizeInput
@@ -39,7 +38,7 @@ const IfThenElse = ({ fieldState, Blur, setLastActiveIfThenElseField, deleteIfTh
                         />
                     </div>
                 }
-                {(fieldState.value.length > 1 && fieldState.value[1] != null) &&
+                {(fieldState.value.length > 1 && fieldState.value[1] != null) && //Проверяем есть ли поле then
                     <div
                         style={{
                             marginTop: fieldState.value[0] != null ? '35px' : '0'
@@ -53,7 +52,7 @@ const IfThenElse = ({ fieldState, Blur, setLastActiveIfThenElseField, deleteIfTh
                         />
                     </div>
                 }
-                {(fieldState.value.length > 2 && fieldState.value[2] != null) &&
+                {(fieldState.value.length > 2 && fieldState.value[2] != null) && //Проверяем есть ли поле else
                     <div
                         style={{
                             marginTop: fieldState.value[1] != null ? '35px' : '0'

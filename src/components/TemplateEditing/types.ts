@@ -8,11 +8,13 @@ export interface ITemplateNote {
 
 export interface ITemplateEditing {
     arrVarNames: string[],
-    template?: ITemplateNote[],
-    callbackSave?: () => Promise<unknown>,
+    template?: ITemplateNote[] | null,
+    callbackSave?: (template:ITemplateNote[]) => void,
+    _closeCallback?:()=>void
 }
 
 export interface ITemplateEditingButtons{
     previewCallback:()=>void,
-    saveCallback:()=>void
+    saveCallback:()=>void,
+    closeCallback:()=>void
 }

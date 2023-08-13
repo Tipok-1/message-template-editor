@@ -49,7 +49,6 @@
     width:100%;
 }
 .variablesWrap{
-    border:1px solid green;
     font-size: 18px;
 }
 .variables{
@@ -72,7 +71,6 @@
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    border:1px solid red;
 }
 .messageContent{
     margin: 20px;
@@ -83,7 +81,6 @@
 }
 /*Buttons*/
 .buttonsWrap{
-    border:1px solid black;
     display: flex;
     margin-bottom: 20px;
 }
@@ -93,4 +90,28 @@
     width: 20%;
     display: flex;
     justify-content: space-between;
+}
+.infoMessage{
+    position: absolute;
+    left: 45%;
+    top:5%;
+    font-size: 26px;
+    font-weight: bold;
+    color:rgb(88, 86, 86);
+    animation: infoMessage 3s linear 1 forwards;
+}
+
+@keyframes infoMessage{
+    0%{
+        opacity: 0;
+    }
+    20%{
+        opacity: 1;
+    }
+    80%{
+        opacity: 1;
+    }
+    100%{
+        opacity: 0;
+    }
 }

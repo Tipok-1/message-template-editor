@@ -9,23 +9,25 @@ import TemplatePreview from '../TemplatePreview/TemplatePreview';
 import { GrClose } from "react-icons/gr";
 import { ITemplateEditing, ITemplateEditingButtons, ITemplateNote } from './types';
 
-const TemplateEditingButtons = memo(({ previewCallback, saveCallback }: ITemplateEditingButtons) => {
+const TemplateEditingButtons = memo(({ previewCallback, saveCallback, closeCallback}: ITemplateEditingButtons) => {
     return (
         <div className={classes.buttonsWrap}>
             <div className={classes.buttonsCenterWrap}>
                 <Button onClick={previewCallback} ico={IcoType.preview}>Preview</Button>
                 <Button ico={IcoType.save} onClick={saveCallback}>Save</Button>
-                <Button ico={IcoType.close}>Close</Button>
+                <Button ico={IcoType.close} onClick={closeCallback}>Close</Button>
             </div>
         </div>
     )
 })
-const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
-    const [previewMessageShift, setPreviewMessageShift] = useState(102);
-    const [lastActiveElement, setLastActiveElement] = useState<string>(createId());
-    const [lastCursorPosition, setLastCursorPosition] = useState<number>(0);
-    const [lastActiveIfThenElseField, setLastActiveIfThenElseField] = useState<number>(0);
-    const [templ, setTempl] = useState<ITemplateNote[]>(template || [{ id: lastActiveElement, value: '' }])
+const TemplateEditing = ({ arrVarNames, template, callbackSave, _closeCallback}: ITemplateEditing) => {
+    const [previewMessageShift, setPreviewMessageShift] = useState(102);//Состояние для контроля отображения preview
+    const [lastActiveElement, setLastActiveElement] = useState<string>(template ? template[0].id : createId());
+    //Состояние хранящее id последнего активного элемента
+    const [lastCursorPosition, setLastCursorPosition] = useState<number>(0);//Состояние хранящее последнюю позицию курсора в активном элементе
+    const [lastActiveIfThenElseField, setLastActiveIfThenElseField] = useState<number>(0);//Состояние хранящее номер активного поля в блоке [if-then-else]
+    const [templ, setTempl] = useState<ITemplateNote[]>(template || [{ id: lastActiveElement, value: '' }])//Состояние хранящее шаблон
+    const [infoMessage, setInfoMessage] = useState('')//Состояние хранящее информационное сообщение
 
     const Blur = useCallback(function BlurFN(val: string, id: string, cursorPosition: number, fieldNumber?: number) {
         //Обновляем state только после потери фокуса
@@ -52,9 +54,6 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
         setLastCursorPosition(cursorPosition)
         setLastActiveElement(id);
     }, [])
-    function clickSave() {
-        //setTimeout(() => console.log(templ), 0);
-    }
     function clickVariables(variables: string) {
         //Добавляем переменную в последний активный textfield
         if (lastActiveElement) {
@@ -77,7 +76,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                             id: el.id,
                             value: el.value.map((arrEl, i) => i == lastActiveIfThenElseField ? 
                             (arrEl !== null) ? arrEl.slice(0, lastCursorPosition) + `{${variables}}`+ arrEl.slice(lastCursorPosition): arrEl
-                            : arrEl),
+                            : arrEl),//Если переменная блок [if-then-else] - добавляем переменную в нужное поле
                         }
                         if (el.nesting != undefined) obj.nesting = el.nesting
                         if (el.startWhithId) obj.startWhithId = el.startWhithId
@@ -114,6 +113,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                 });
             }
             if (Array.isArray(prevBlock.value) && Array.isArray(nextBlock.value)) {
+                //Если предыдущий и последующий блоки это массивы, надо обьединить их в один блок с обобщённой информацией
                 let coupledBlock: string[] = [];
                 prevBlock.value.forEach((el, i) => el !== null ? coupledBlock.push(el) : coupledBlock.push(nextBlock.value[i] as string));
                 const prevBlockIndex = newTempl.findIndex(el => el.id === prevBlock.id);
@@ -151,7 +151,9 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
             }
         }
         if (nest && nest + 1 > 10) {
-            alert('Максимальное число вложенных блоков - 10');
+            if(!infoMessage) {
+                setInfoMessage('Максимальное число вложенных блоков - 10');
+            }
             return;
         }
         if (index != -1) {
@@ -170,8 +172,8 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     const ifthenelseBlock: ITemplateNote = { id: createId(), value: ['', '', ''], nesting: nest != null ? nest : 0 };
                     const input: ITemplateNote = { id: createId(), value: '', nesting: nest != null ? nest : 0 }
                     if(prevBlock.parentId) {
-                        ifthenelseBlock.parentId = prevBlock.parentId;
-                        input.parentId = prevBlock.parentId;
+                        ifthenelseBlock.parentId = prevBlock.parentId;//Сохраняем id родителя
+                        input.parentId = prevBlock.parentId;//Сохраняем id родителя
                     }
                     const changedTempl: ITemplateNote[] = [
                         ...templ.slice(0, index + 1),
@@ -183,7 +185,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                 }
             } else {
                 /*Если текущий элемент - блок [if-then-else] разбиваем блок на 2 часи и между ними вставляем блок [if-then-else] 
-                и ещё один инпут и остальные блоки(блок [if-then-else] не может быть последним)*/
+                ещё один инпут и остальные блоки(блок [if-then-else] не может быть последним)*/
                 const fieldNumber = lastActiveIfThenElseField;
                 const ifThenElseBlock = Object.assign({}, templ[index]);
                 let val = ifThenElseBlock.value as (string | null)[]
@@ -199,9 +201,6 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     id: createId(),
                     value: secondBlockPart,
                     nesting: nest != null ? nest : 0,
-                    /*Если один и тот же [if-then-else] блок разбивают более одного раза(например разбили на if и thenElse, а потом разбили then или else)
-                     то в fistBlockPart уже должен быть startWhithId(ключ к началу разбиения) иначе сам fistBlockPart - начало(то есть часть с if)
-                     Максимальное разбиение одного блока 3 раза - каждую часть*/
                 }
                 
                 const checkLastBlock = templ.find(el=>{
@@ -211,7 +210,9 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     } 
                     return false
                 })
+                //checkLastBlock хранит info был ли текущий блок уже разбит и если да, является ли уже существующее разбиение более низким чем текущее
                 if(!checkLastBlock) {
+                    //Текущее разбиение самое низкое, сохраняем в нём самое начало блока
                     secondPart.startWhithId =  ifThenElseBlock.startWhithId ? ifThenElseBlock.startWhithId : ifThenElseBlock.id
                 }
 
@@ -222,12 +223,13 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     { id: createId(), value: ['', '', ''], nesting: nest != null ? nest + 1 : 0, parentId: ifThenElseBlock.id },
                     { id: createId(), value: '', nesting: nest != null ? nest+1 : 0, parentId: ifThenElseBlock.id },
                     secondPart,
-                    //...templ.slice(index + 1, templ.length)
                 ]
                 let rest = [...templ.slice(index + 1, templ.length)];
                 let NullCount = (secondPart.value as (string | null)[]).reduce((cur,el)=>el=== null ? cur+1 : cur, 0);
                 
                 if(checkLastBlock && NullCount < 3) {
+                    /*Если сначала было разбито более низое поле(например else), а после разбили более высокое(например then),
+                    значения parentId у дочерних элементов более низкого поля (блока else) становятся не валидными(так как изменяется id блока else)*/
                     for(let i = 0; i < rest.length; i++) {
                         if(rest[i].parentId === ifThenElseBlock.id) {
                             rest[i].parentId = secondPart.id;
@@ -235,15 +237,30 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                     }
                 }
                 changedTempl.push(...rest);
-                //
                 setTempl(changedTempl);
 
             }
         }
     }
     const previewCallback = useCallback(() => setPreviewMessageShift(0), []);
-    const saveCallback = useCallback(() => clickSave(), []);
-
+    const closeCallback = useCallback(() => {
+        if(_closeCallback) {
+            _closeCallback();
+        }
+    }, []);
+    const saveCallback = useCallback(() => {
+        if(callbackSave) {
+            if(!infoMessage) {
+                setInfoMessage('Шаблон сохранён');
+            }
+            callbackSave(templ)
+        }
+    },[templ, callbackSave]);
+    useEffect(()=>{
+        if(infoMessage){
+            setTimeout(()=>setInfoMessage(''), 3100);
+        }
+    }, [infoMessage])
     return (
         <>
             <div
@@ -294,7 +311,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                         </div>
                         <Button onClick={clickIfThenElse} className={classes.IfThenElseButton}>IF-THEN-ELSE</Button>
                     </div>
-                    <TemplateEditingButtons previewCallback={previewCallback} saveCallback={saveCallback} />
+                    <TemplateEditingButtons previewCallback={previewCallback} saveCallback={saveCallback} closeCallback={closeCallback}/>
                 </div>
             </div>
             <div
@@ -308,6 +325,7 @@ const TemplateEditing = ({ arrVarNames, template }: ITemplateEditing) => {
                 </div>
                 <TemplatePreview arrVarNames={arrVarNames} template={templ} />
             </div>
+            {infoMessage && <div className={classes.infoMessage}>{infoMessage}</div>}
         </>
     );
 };

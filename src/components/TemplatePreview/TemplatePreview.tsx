@@ -27,7 +27,6 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
         }
         return str
     }
-    //const reverseTempla
     for (let i = 0; i < template.length; i++) {
         let value = template[i].value;
         if (Array.isArray(value)) {
@@ -56,13 +55,13 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
                 } else {
                     if (template[index].value[2] === null) {//template[index] - это блок then который может быт составным - если value[2] === null
                         //const thenFieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
-                        const thenFieldEnd = findLastIndex(template, el => el.parentId == template[index].id)
+                        const thenFieldEnd = findLastIndex(template, el => el.parentId === template[index].id)
                         if (thenFieldEnd !== -1) {
                             index = thenFieldEnd + 1;
                         }
                     }
                     //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
-                    const fieldEnd = findLastIndex(template,el =>  el.parentId == template[index].id);//Проверяем составной ли блок else
+                    const fieldEnd = findLastIndex(template,el =>  el.parentId === template[index].id);//Проверяем составной ли блок else
                     let elseResult = findAndReplaceValues(template[index].value[2] as string);
                     if (fieldEnd !== -1) {
                         const elseBlock = template.slice(index + 1, fieldEnd + 1)//(Первую строку else мы уже включили)
@@ -72,6 +71,7 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
                 }
                 i = lastBlockPart;
             } else {
+                //Если блок [if-then-else] не составной - просто считываем поля
                 const ifResult = findAndReplaceValues(value[0] || '');
                 if (ifResult) {
                     result += findAndReplaceValues(value[1] || '');
@@ -89,7 +89,7 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
 }
 
 const TemplatePreview = ({ template, arrVarNames }: ITemplatePreview) => {
-    const [values, setValues] = useState<{ [key: string]: string; }>({});
+    const [values, setValues] = useState<{ [key: string]: string; }>({});//Состояние хранящее значения переменных (объект вида {name : value})
     useEffect(() => {
         const obj: { [key: string]: string; } = {};
         arrVarNames.forEach(el => obj[el] = '')
@@ -105,7 +105,7 @@ const TemplatePreview = ({ template, arrVarNames }: ITemplatePreview) => {
             obj[type] = str;
             setValues(obj)
         }
-    }, 300)
+    }, 300)//Задаём промежуток времени спустя которое, после остановки ввода в textfield, будет вызываться callback
     return (
         <div className={classes.TemplatePreview}>
             <div
