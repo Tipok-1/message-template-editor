@@ -32,7 +32,7 @@ const TemplateEditing = ({ arrVarNames, template, callbackSave, _closeCallback}:
     const Blur = useCallback(function BlurFN(val: string, id: string, cursorPosition: number, fieldNumber?: number) {
         //Обновляем state только после потери фокуса
         setTempl(prev => prev.map(el => {
-            if (el.id != id) {
+            if (el.id !== id) {
                 return el
             } else {
                 if (!Array.isArray(el.value)) {
@@ -92,11 +92,13 @@ const TemplateEditing = ({ arrVarNames, template, callbackSave, _closeCallback}:
         let blockId = templ.findIndex(el => el.id == id)
         const prevBlock = templ[blockId - 1];
         let nextBlock = templ[blockId + 2];
+       
         if(block) {
             let newTempl = null;
             let blockEnd = templ.findIndex(el=>el.startWhithId === block!.id)
             if(blockEnd !== -1) {
                 //Блок составной
+                nextBlock = templ[blockEnd + 2]; // Получаем следующий блок который идёт за текущим
                 newTempl = templ.filter((_, i) => {
                     if (i >= blockId  && i <= blockEnd + 1) {//Удаляем сам  блок и следующий за ним input
                         return false
