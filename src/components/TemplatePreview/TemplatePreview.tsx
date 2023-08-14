@@ -27,8 +27,6 @@ export function TemplateGenerator(template: ITemplateNote[], values: { [key: str
             }
             return str
         } else {//Не должно выполняться при коректной работе
-            console.log('error')
-            console.log(template);
             return ''
         }
     }
