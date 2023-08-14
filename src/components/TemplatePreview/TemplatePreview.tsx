@@ -43,13 +43,12 @@ export function TemplateGenerator(template: ITemplateNote[], values: { [key: str
                     const ifBlock = template.slice(i + 1, fieldEnd + 1);//(Первую строку if мы уже включили)
                     ifResult += TemplateGenerator(ifBlock, values, template[i].id);
                     index = fieldEnd + 1
-                }
-
+                } 
                 if (ifResult) {
                     //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
                     const fieldEnd = findLastIndex(template, el => el.parentId === template[index].id);//Проверяем составной ли блок then
                     let thenResult = findAndReplaceValues(template[index].value[1] as string);
-                    if (fieldEnd !== -1) {
+                    if (fieldEnd !== -1 && value[2] === null) {
                         const thenBlock = template.slice(index + 1, fieldEnd + 1) //(Первую строку then мы уже включили)
                         thenResult += TemplateGenerator(thenBlock, values, template[index].id);
                         index = fieldEnd + 1//Следующий блок берём после блока then
@@ -114,7 +113,8 @@ const TemplatePreview = ({ template, arrVarNames }: ITemplatePreview) => {
             <div
                 className={classes.resultMessage}
                 style={{
-                    wordWrap: 'break-word'
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
                 }}
             >{resultMessage}</div>
             {
