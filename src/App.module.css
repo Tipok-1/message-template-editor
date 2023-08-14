@@ -1,0 +1,21 @@
+.content {
+    width: 100%;
+    margin: auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100vh;
+    overflow-x: hidden;
+}
+::-webkit-scrollbar {
+    width: 10px; 
+    background-color: rgb(146, 146, 146);
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgb(41, 40, 40);
+    border-radius: 9em;
+}
+.openEditorButton{
+    margin: auto;
+}
