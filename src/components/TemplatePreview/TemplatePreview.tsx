@@ -9,7 +9,7 @@ interface ITemplatePreview {
     arrVarNames: string[],
 }
 
-function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string; }, _parentId?: string): string {
+export function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string; }, _parentId?: string): string {
     let result = ''
     function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
         let l = arr.length;
@@ -19,13 +19,18 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
         }
         return -1;
     }
-
     function findAndReplaceValues(str: string) {
-        for (let key in values) {
-            let regex = new RegExp(`{${key}}`, 'g');
-            str = str.replace(regex, values[key]);
+        if (str !== null) {
+            for (let key in values) {
+                let regex = new RegExp(`{${key}}`, 'g');
+                str = str.replace(regex, values[key]);
+            }
+            return str
+        } else {//Не должно выполняться при коректной работе
+            console.log('error')
+            console.log(template);
+            return ''
         }
-        return str
     }
     for (let i = 0; i < template.length; i++) {
         let value = template[i].value;
@@ -61,7 +66,7 @@ function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: s
                         }
                     }
                     //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
-                    const fieldEnd = findLastIndex(template,el =>  el.parentId === template[index].id);//Проверяем составной ли блок else
+                    const fieldEnd = findLastIndex(template, el => el.parentId === template[index].id);//Проверяем составной ли блок else
                     let elseResult = findAndReplaceValues(template[index].value[2] as string);
                     if (fieldEnd !== -1) {
                         const elseBlock = template.slice(index + 1, fieldEnd + 1)//(Первую строку else мы уже включили)
