@@ -8,17 +8,16 @@ interface ITemplatePreview {
     template: ITemplateNote[],
     arrVarNames: string[],
 }
-
+ export function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
+    let l = arr.length;
+    while (l--) {
+        if (fn(arr[l], l, arr))
+            return l;
+    }
+    return -1;
+}
 export function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string; }, _parentId?: string): string {
     let result = ''
-    function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
-        let l = arr.length;
-        while (l--) {
-            if (fn(arr[l], l, arr))
-                return l;
-        }
-        return -1;
-    }
     function findAndReplaceValues(str: string) {
         if (str !== null) {
             let regespStr = ''
