@@ -8,24 +8,40 @@ interface ITemplatePreview {
     template: ITemplateNote[],
     arrVarNames: string[],
 }
-
+ export function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
+    let l = arr.length;
+    while (l--) {
+        if (fn(arr[l], l, arr))
+            return l;
+    }
+    return -1;
+}
 export function TemplateGenerator(template: ITemplateNote[], values: { [key: string]: string; }, _parentId?: string): string {
     let result = ''
-    function findLastIndex<T>(arr: Array<T>, fn: (value: T, index: number, obj: T[]) => boolean) {
-        let l = arr.length;
-        while (l--) {
-            if (fn(arr[l], l, arr))
-                return l;
-        }
-        return -1;
-    }
     function findAndReplaceValues(str: string) {
         if (str !== null) {
+            let regespStr = ''
             for (let key in values) {
-                let regex = new RegExp(`{${key}}`, 'g');
-                str = str.replace(regex, values[key]);
+                regespStr += `{${key}}` + '|';
             }
-            return str
+            regespStr = regespStr.slice(0, regespStr.length - 1);
+            let regex = new RegExp(regespStr, 'g'); //Составляем регулярное выражение из ключей values
+            let result:IterableIterator<RegExpMatchArray> = str.matchAll(regex)//Получаем все совпадения
+            let resultArray = Array.from(result);
+            let resultString = '';
+            let prevIndex = 0;//Индекс после предыдущей замены
+            for(let coincidence of resultArray ) {
+                let index = coincidence.index;
+                let key = coincidence['0'].slice(1, coincidence['0'].length - 1);
+                let wordLength = coincidence['0'].length;
+                if(values.hasOwnProperty(key)) {
+                    resultString += str.slice(prevIndex, index);//Прибавляем к результату строку до совпадения
+                    resultString += values[key];//Прибавляем к результату совпадение
+                    prevIndex = (index || 0) + wordLength;//Делаем предыдущий индекс сразу после совпадения
+                }
+            }
+            resultString += str.slice(prevIndex, str.length);//Прибавляем к результату строку после всех совпадений
+            return resultString;
         } else {//Не должно выполняться при коректной работе
             return ''
         }
@@ -44,12 +60,11 @@ export function TemplateGenerator(template: ITemplateNote[], values: { [key: str
                     ifResult += TemplateGenerator(ifBlock, values, template[i].id);
                     index = fieldEnd + 1
                 }
-
                 if (ifResult) {
                     //const fieldEnd = template.findLastIndex(el => el.parentId == template[index].id);
                     const fieldEnd = findLastIndex(template, el => el.parentId === template[index].id);//Проверяем составной ли блок then
                     let thenResult = findAndReplaceValues(template[index].value[1] as string);
-                    if (fieldEnd !== -1) {
+                    if (fieldEnd !== -1 && value[2] === null) {
                         const thenBlock = template.slice(index + 1, fieldEnd + 1) //(Первую строку then мы уже включили)
                         thenResult += TemplateGenerator(thenBlock, values, template[index].id);
                         index = fieldEnd + 1//Следующий блок берём после блока then
@@ -114,7 +129,8 @@ const TemplatePreview = ({ template, arrVarNames }: ITemplatePreview) => {
             <div
                 className={classes.resultMessage}
                 style={{
-                    wordWrap: 'break-word'
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap'
                 }}
             >{resultMessage}</div>
             {
