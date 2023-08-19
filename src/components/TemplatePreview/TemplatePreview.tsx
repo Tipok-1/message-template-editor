@@ -138,7 +138,7 @@ const TemplatePreview = ({ template, arrVarNames }: ITemplatePreview) => {
                     return <div
                         key={v + i}>
                         <div className={classes.VariablesWrapTitle}>{'{' + v + '}'}</div>
-                        <AutoResizeInput data-type={v} changedFunction={changeStateFunction} />
+                        <AutoResizeInput className={classes.VariablesInput} data-type={v} changedFunction={changeStateFunction} />
                     </div>
                 })
             }
