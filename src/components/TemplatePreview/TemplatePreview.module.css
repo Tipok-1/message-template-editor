@@ -1,6 +1,8 @@
 .TemplatePreview{
     height: 95%;
     width: 95%;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 .resultMessage{
     padding: 5px;
@@ -10,7 +12,13 @@
     border:1px solid black;
     background-color: rgb(82, 82, 82);
     color:white;
+    max-height: 40%;
+    overflow-y: auto;
 }
 .VariablesWrapTitle{
     margin-bottom: 5px;
+}
+.VariablesInput{
+    width:calc(95% - 10px);
+    margin: auto;
 }
